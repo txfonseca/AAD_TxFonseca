@@ -1,0 +1,25 @@
+#Connect to your Azure AD tenant 
+Connect-AzureAD
+
+#Create an application (you can instead use an existing application if you would like)
+$App = New-AzureADApplication -DisplayName “My Custom Extensions App”
+
+#Create a service principal
+New-AzureADServicePrincipal -AppId $App.AppId
+
+#Create an extension property
+New-AzureADApplicationExtensionProperty -ObjectId $App.ObjectId -Name “O365E5” -DataType “String” -TargetObjects “User”
+
+#List users in your tenant to determine the objectid for your user
+Get-AzureADUser
+## $userobjectID = 
+
+Get-AzureADApplicationExtensionProperty -ObjectId $App.ObjectId
+
+#Set a value for the extension property on the user. Replace the objectid with the ID of the user and the extension name with the value from the previous step
+Set-AzureADUserExtension -objectid YOURUSEROBJECTID -ExtensionName “extension_YOUREXETENSIONAPPOBJECTIDID_YOUREXTENSIONATTRIBUTENAME”
+
+#Verify that the attribute was added correctly.
+Get-AzureADUser -ObjectId $userobjectID | Select -ExpandProperty ExtensionProperty
+
+#You can also use GRAPH: Select-MgProfile -Name "beta" (Get-MgUser -UserId "[UserObjectID]").OnPremisesExtensionAttributes
