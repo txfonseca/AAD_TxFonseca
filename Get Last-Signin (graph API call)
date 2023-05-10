@@ -1,0 +1,48 @@
+<#
+Source: https://docs.microsoft.com/en-us/graph/api/user-get?view=graph-rest-beta&tabs=http
+#>
+#Install-Module -Name MSAL.PS -RequiredVersion 4.2.1.3
+Import-Module MSAL.PS
+
+
+
+$date = Get-Date -Format yyyy-MM-ddTHH:mm:ssZ
+$date2 = (Get-Date $date).addDays(-60).ToString("yyyy-MM-ddTHH:mm:ssZ")
+
+$clientId = ""
+$clientSecret = (ConvertTo-SecureString "" -AsPlainText -Force)
+$tenantId = ""
+$tokenObj = Get-MsalToken -Scope 'https://graph.microsoft.com/.default' -clientID $clientId -clientSecret $clientSecret -tenantID $tenantId | Select-Object -Property AccessToken
+
+$date = Get-Date -Format yyyy-MM-ddTHH:mm:ssZ
+$apiUrl = "https://graph.microsoft.com/beta/users?filter=signInActivity/lastSignInDateTime ge $date2 or signInActivity/lastNonInteractiveSignInDateTime ge $date2 &`$select=userPrincipalName,displayName,onPremisesExtensionAttributes,mail,signInActivity,usageLocation"
+#$apiUrl = "https://graph.microsoft.com/beta/users?$select=userPrincipalName,displayName,onPremisesExtensionAttributes,mail,signInActivity,usageLocation"
+$results = Invoke-RestMethod -Headers @{Authorization = "Bearer $($tokenObj.AccessToken)"} -Uri $apiUrl -Method Get
+
+
+#Begin populating results
+$ResultsValue = $Results.value
+
+
+#If there is a next page, query the next page until there are no more pages and append results to existing set
+if ($results."@odata.nextLink" -ne $null) {
+    write-host enumerating pages -ForegroundColor yellow
+    $NextPageUri = $results."@odata.nextLink"
+    ##While there is a next page, query it and loop, append results
+    While ($NextPageUri -ne $null) {
+        $NextPageRequest = (Invoke-RestMethod -Headers @{Authorization = "Bearer $($tokenObj.AccessToken)"} -Uri $NextPageURI -Method Get)
+        $NxtPageData = $NextPageRequest.Value
+        $NextPageUri = $NextPageRequest."@odata.nextLink"
+        $ResultsValue = $ResultsValue + $NxtPageData
+    }
+}
+
+#Return completed results
+#return $ResultsValue
+
+
+#Export results
+$export = $ResultsValue | select userPrincipalName, displayName, @{L="EEID";E={$_.onPremisesExtensionAttributes.extensionAttribute1}}, mail, usageLocation, @{L="LastSignInDateTime";E={$_.signInActivity.lastSignInDateTime}}, @{L="LastNonInteractiveSignInDateTime";E={$_.signInActivity.lastNonInteractiveSignInDateTime}} | Sort-Object -Property LastSignInDateTime
+$date3 = Get-Date -Format MMddyyyyHHmmss
+$file = ".\LastSignInNonInteractive_$date3.csv"
+$export | Export-Csv $file -NoTypeInformation -Force
