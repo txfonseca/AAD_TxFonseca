@@ -1,0 +1,34 @@
+    # Connect to AzureAD
+    Connect-AzureAD
+
+    # Get CSV content
+    $csvs = Import-Csv -Path "C:\csv.csv"
+
+    # Create arrays for skipped and failed users
+    $SkippedUsers = @()
+    $FailedUsers = @()
+
+    # Loop trough CSV records
+    foreach ($csv in $csvs) {
+        $mail = $csv.mail
+        $user = Get-AzureADUser -Filter "Mail eq '$mail'"  
+        if ($user) {
+            try{
+            $user | Set-AzureADUser -Mobile $csv.phone -CompanyName $csv.company
+            } catch {
+            $FailedUsers += $mail
+            Write-Warning "$mail user found, but FAILED to update."
+            }
+        }
+        else {
+            Write-Warning "$mail not found, skipped"
+            $SkippedUsers += $mail
+        }
+    }
+
+    # Array skipped users
+    # $SkippedUsers
+
+    # Array failed users
+    # $FailedUsers
+
