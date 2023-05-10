@@ -1,0 +1,57 @@
+1. Open Windows PowerShell as an administrator.
+2. Install the Azure Active Directory PowerShell module by running the following command:
+```powershell
+Install-Module AzureAD
+```
+3. Import the Azure Active Directory PowerShell module by running the following command:
+```powershell
+Import-Module AzureAD
+
+ 
+
+```powershell
+# Update extension attribute for a list of users in Azure AD
+
+ 
+
+# Set variables
+$extensionAttributeName = "extensionAttribute1"
+$extensionAttributeValue = "New Value"
+$users = Import-Csv -Path "C:\Path\To\Users.csv"
+
+ 
+
+# Connect to Azure AD
+Connect-AzureAD
+
+ 
+
+# Loop through each user and update the extension attribute
+foreach ($user in $users) {
+    $userId = $user.Id
+    try {
+        Set-AzureADUserExtension -ObjectId $userId -ExtensionName $extensionAttributeName -ExtensionValue $extensionAttributeValue
+        Write-Host "Extension attribute updated for user with ID: $userId"
+    }
+    catch {
+        Write-Host "Error updating extension attribute for user with ID: $userId"
+        Write-Host $_.Exception.Message
+    }
+}
+
+ 
+
+# Disconnect from Azure AD
+Disconnect-AzureAD
+```
+
+ 
+
+Make sure to update the following variables before running the script:
+- `$extensionAttributeName`: The name of the extension attribute you want to update.
+- `$extensionAttributeValue`: The value you want to set for the extension attribute.
+- `$users`: The path to the CSV file containing the list of users you want to update. Make sure the CSV file has a header row with the column name "Id" and a list of user IDs in the subsequent rows.
+
+ 
+
+The script will loop through each user in the CSV file and attempt to update the extension attribute. If the update is successful, it will output a message saying so. If it fails, it will output a message with the error details.
