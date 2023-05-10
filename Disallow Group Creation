@@ -1,0 +1,23 @@
+##### FORBID CREATION OF SECURITY GROUPS ####
+Connect-MsolService
+Set-MsolCompanySettings -UsersPermissionToCreateGroupsEnabled $False
+
+
+##### FORBID CREATION OF O365 GROUPS ####
+### create new AAD Setting template ###
+
+Get-AzureADDirectorySettingTemplate
+$TemplateId = (Get-AzureADDirectorySettingTemplate | where { $_.DisplayName -eq "Group.Unified" }).Id
+$Template = Get-AzureADDirectorySettingTemplate | where -Property Id -Value $TemplateId -EQ
+$Setting = $Template.CreateDirectorySetting()
+$Setting["EnableGroupCreation"] = "False"
+New-AzureADDirectorySetting -DirectorySetting $Setting
+$Setting.Values
+
+
+### edit existing one (for error "Another object with the same value for property templateId already exists.") ###
+
+$Setting = Get-AzureADDirectorySetting | ? { $_.DisplayName -eq "Group.Unified"}
+$Setting.Values
+$Setting["EnableGroupCreation"] = "False"
+Set-AzureADDirectorySetting -Id $Setting.Id -DirectorySetting $Setting
