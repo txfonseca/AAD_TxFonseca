@@ -1,0 +1,20 @@
+##Get the Role Management Policies
+Connect-MgGraph -Scopes RoleManagementPolicy.ReadWrite.Directory, RoleManagement.ReadWrite.Directory 
+Get-MgPolicyRoleManagementPolicy -Filter "scopeId eq '/' and scopeType eq 'DirectoryRole'"
+Get-MgPolicyRoleManagementPolicy -UnifiedRoleManagementPolicyId $unifiedRoleManagementPolicyId
+
+#Get Id, PolicyID, and RoleDefinitionID (correlatable)
+Get-MgPolicyRoleManagementPolicyAssignment -Filter "scopeId eq '/' and scopeType eq 'Directory'"
+
+##Defining Variables
+$unifiedRoleManagementPolicyId = 
+$unifiedRoleManagementPolicyRuleId = 
+
+##Get Rules for specified Policy
+Get-MgPolicyRoleManagementPolicyRule -UnifiedRoleManagementPolicyId $unifiedRoleManagementPolicyId | Format-List
+
+##Get Rule Additional Properties
+(Get-MgPolicyRoleManagementPolicyRule -UnifiedRoleManagementPolicyId $unifiedRoleManagementPolicyId -UnifiedRoleManagementPolicyRuleId $unifiedRoleManagementPolicyRuleId).AdditionalProperties
+
+##Update the specified Role Management Policy ($unifiedRoleManagementPolicyId), on the specific rule ($unifiedRoleManagementPolicyRuleId)
+update-MgPolicyRoleManagementPolicyRule -UnifiedRoleManagementPolicyId $unifiedRoleManagementPolicyId -UnifiedRoleManagementPolicyRuleId $unifiedRoleManagementPolicyRuleId -AdditionalProperties @{"isDefaultRecipientsEnabled"="$true";"@odata.type"="#microsoft.graph.unifiedRoleManagementPolicyNotificationRule";"notificationType"="Email";"recipientType"="Admin";"notificationLevel"="All";"notificationRecipients"=@("test@test.com")}
