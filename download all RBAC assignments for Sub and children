@@ -1,0 +1,39 @@
+Downloading all the RBAC assignments for a sub and its children scopes is available on the Portal, but sometimes we just want to simplify it a bit (removing the ammount of info exported, for example, or integrating it into some workflow that uses PS). Hence the script below.
+[NOTE: If you don't export the table to CSV at the end, it just renders the results in the PS window]
+
+# Set the subscription context
+Set-AzContext -SubscriptionId Your_Subscription_ID
+
+# List all role assignments for the subscription
+Write-Host "Subscription: $(Get-AzContext).Subscription.Name"
+$subscriptionRoleAssignments = Get-AzRoleAssignment -Scope "/subscriptions/Your_Subscription_ID" | Select-Object -Property ObjectId, DisplayName, RoleDefinitionName, Scope
+
+# Iterate over all resource groups
+$resourceGroupRoleAssignments = @()
+foreach ($rg in Get-AzResourceGroup) {
+    Write-Host "Resource Group: $($rg.ResourceGroupName)"
+
+    # List all role assignments for the resource group
+    $rgRoleAssignments = Get-AzRoleAssignment -Scope "/subscriptions/Your_Subscription_ID/resourceGroups/$($rg.ResourceGroupName)" | Where-Object { $_.Scope -eq "/subscriptions/Your_Subscription_ID/resourceGroups/$($rg.ResourceGroupName)" } | Select-Object -Property ObjectId, DisplayName, RoleDefinitionName, Scope
+    $resourceGroupRoleAssignments += $rgRoleAssignments
+
+    # Iterate over all resources in the resource group
+    foreach ($resource in Get-AzResource -ResourceGroupName $rg.ResourceGroupName) {
+        Write-Host "Resource: $($resource.ResourceId)"
+
+        # List all role assignments for the resource
+        $resourceRoleAssignments = Get-AzRoleAssignment -Scope $resource.ResourceId | Where-Object { $_.Scope -eq $resource.ResourceId } | Select-Object -Property ObjectId, DisplayName, RoleDefinitionName, Scope
+        $resourceGroupRoleAssignments += $resourceRoleAssignments
+    }
+}
+
+# Prompt to export to CSV
+$export = Read-Host "Do you want to export the results to a CSV file? (Y/N)"
+if ($export -eq "Y") {
+    $subscriptionRoleAssignments + $resourceGroupRoleAssignments + $resourceRoleAssignments | Export-Csv -Path "C:\RoleAssignments.csv" -NoTypeInformation -Delimiter ","
+}
+else {
+    $subscriptionRoleAssignments | Out-Host
+    $resourceGroupRoleAssignments | Out-Host
+    $resourceRoleAssignments | Out-Host
+}
