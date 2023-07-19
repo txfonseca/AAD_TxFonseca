@@ -1,0 +1,37 @@
+## This PowerShell script retrieves all users with an SPE_E5 license, displays their ObjectID, DisplayName, and the assignment scope for each of the assigned licenses, and exports the results to a CSV file. 
+## The script can be helpful in scenarios where you need to audit or manage users with a specific license type, such as SPE_E5, in your organization. This script can be particularly useful for administrators who need to track and manage users with specific licenses in their organization, ensuring compliance and optimizing license usage.
+
+## Here's a brief overview of what the script does:
+## - Imports the Microsoft.Graph module to interact with Microsoft Graph API.
+## - Connects to Microsoft Graph API with the required scope "User.Read.All".
+## - Retrieves all users with an SPE_E5 license, including their AssignedLicenses, DisplayName, LicenseAssignmentStates, and ObjectID.
+## - Iterates through the users and creates a custom object for each user, containing their ObjectID, DisplayName, and assignment sources (Direct or Group assignment).
+## - Exports the custom objects to a CSV file.
+
+Import-Module Microsoft.Graph
+
+Connect-MgGraph -Scopes "User.Read.All"
+
+$SPE_E5_SkuId = "06ebc4ee-1bb5-47dd-8120-11324bc54e06" # Replace with the actual SKU ID for the license you need to search, this one is SPE_E5
+$OutputFile = "UsersWithSPE_E5.csv"
+
+$usersWithSPE_E5 = Get-MgUser -All -Property AssignedLicenses, DisplayName, LicenseAssignmentStates, Id | Where-Object { $_.AssignedLicenses.SkuId -contains $SPE_E5_SkuId }
+
+$results = @()
+
+foreach ($user in $usersWithSPE_E5) {
+    $assignmentSources = @()
+    foreach ($licenseState in $user.LicenseAssignmentStates) {
+        if ($licenseState.SkuId -eq $SPE_E5_SkuId) {
+            $assignmentSource = if ($licenseState.AssignedByGroup) { "Group: $($licenseState.AssignedByGroup)" } else { "Direct" }
+            $assignmentSources += $assignmentSource
+        }
+    }
+    $results += [PSCustomObject]@{
+        ObjectId = $user.Id
+        DisplayName = $user.DisplayName
+        AssignmentSources = ($assignmentSources -join ', ')
+    }
+}
+
+$results | Export-Csv -Path $OutputFile -NoTypeInformation
