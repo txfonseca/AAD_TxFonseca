@@ -1,0 +1,56 @@
+# Based on https://github.com/debaxtermsft/debaxtermsft/blob/main/LastSignAcitivityDisplayname.ps1, by Derrick Baxter
+
+# Connect to Microsoft Graph
+connect-mggraph -scopes "directory.read.all, auditlog.read.all, user.read.all"
+connect-msolservice
+
+# Get all users
+$users = get-mguser -all | select displayname, userprincipalname, mail, id | Sort-Object displayname -Unique
+
+# Initialize the properties array
+$UserProperties =@()
+
+# Initialize counters
+$totalUsers = $users.Count
+$processedUsers = 0
+
+# Initialize timer
+$startTime = Get-Date
+
+foreach ($useritem in $users)
+{
+    # Increment processed users counter
+    $processedUsers++
+
+    # Calculate elapsed and remaining time
+    $elapsedTime = New-TimeSpan -Start $startTime -End (Get-Date)
+    $estimatedTotalTime = $elapsedTime.TotalSeconds * $totalUsers / $processedUsers
+    $remainingTime = New-TimeSpan -Seconds ($estimatedTotalTime - $elapsedTime.TotalSeconds)
+
+    # Display progress and estimated remaining time
+    Write-Host "Processing user ${processedUsers} of ${totalUsers}: $($useritem.displayname). Estimated time remaining: $($remainingTime.ToString('hh\:mm\:ss'))"
+
+    # Get sign-in activity
+    $ApiUrl = "https://graph.microsoft.com/v1.0/users?`$filter=startswith(displayname,'$($useritem.displayname)')&`$select=displayName,userprincipalname,signInActivity"
+    $auditlog = Invoke-MgGraphRequest -Uri $ApiUrl -method get
+
+    # Get last password change timestamp
+    $lastPwdChange = (Get-MsolUser -UserPrincipalName $useritem.userprincipalname).LastPasswordChangeTimestamp
+
+    foreach($thing in $auditlog.value)
+    {
+        if($thing.signinactivity -ne $null)
+        {
+            $UserProperties += New-Object Object |
+                                Add-Member -NotePropertyName DisplayName -NotePropertyValue $thing.Displayname -PassThru |
+                                Add-Member -NotePropertyName UserprincipalName -NotePropertyValue $thing.userprincipalname -PassThru |
+                                Add-Member -NotePropertyName LastSignin_Date -NotePropertyValue $thing.signinactivity.lastSignInDateTime -PassThru |
+                                Add-Member -NotePropertyName LastPasswordChange -NotePropertyValue $lastPwdChange -PassThru
+        }
+    }
+}
+
+# Export to CSV
+$tdy = get-date -Format "MM-dd-yyyy_hh.mm.ss"
+$outputfile = "c:\temp\useractivity_"+$tdy+".csv"
+$UserProperties | export-csv -Path $outputfile -NoTypeInformation -Encoding UTF8
