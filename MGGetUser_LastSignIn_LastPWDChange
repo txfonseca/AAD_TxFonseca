@@ -1,4 +1,4 @@
-# Based on https://github.com/debaxtermsft/debaxtermsft/blob/main/LastSignAcitivityDisplayname.ps1, by Derrick Baxter
+# Based on https://github.com/debaxtermsft/debaxtermsft/blob/main/LastSignAcitivityDisplayname.ps1, by @debaxtermsft
 
 # Connect to Microsoft Graph
 connect-mggraph -scopes "directory.read.all, auditlog.read.all, user.read.all"
