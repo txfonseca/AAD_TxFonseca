@@ -1,7 +1,33 @@
-User Management:
+#######User Management:#######
 ## Get any users on tenant that have "user@mail" as UPN, mail, othermails, or any mails ##
 GET https://graph.microsoft.com/v1.0/users?$filter=mail eq 'user@mail.com' or userPrincipalName eq 'user@mail.com' or proxyAddresses/any(c:c eq 'smtp:user@mail.com') or proxyAddresses/any(c:c eq 'SMTP:user@mail.com')
 
 
-Group Management:
+#######Group Management:#######
+## Get all groups in the tenant ##
+GET https://graph.microsoft.com/v1.0/groups
 
+## Get a specific group by its ID ##
+GET https://graph.microsoft.com/v1.0/groups/{group-id}
+
+## Create a new group ##
+POST https://graph.microsoft.com/v1.0/groups
+Content-Type: application/json
+
+{
+    "displayName": "New Group",
+    "mailNickname": "newgroup",
+    "description": "This is a new group"
+}
+
+## Update a group's properties ##
+PATCH https://graph.microsoft.com/v1.0/groups/{group-id}
+Content-Type: application/json
+
+{
+    "displayName": "Updated Group",
+    "description": "This group has been updated"
+}
+
+## Delete a group ##
+DELETE https://graph.microsoft.com/v1.0/groups/{group-id}
