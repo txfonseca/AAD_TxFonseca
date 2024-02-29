@@ -23,6 +23,7 @@ Content-Type: application/json
 ## Update a group's properties ##
 PATCH https://graph.microsoft.com/v1.0/groups/{group-id}
 Content-Type: application/json
+GET https://graph.microsoft.com/v1.0/users?$filter=createdDateTime ge 2022-01-01T00:00:00Z and createdDateTime le 2022-03-31T23:59:59Z and contains(userPrincipalName, 'a')
 
 {
     "displayName": "Updated Group",
@@ -31,3 +32,7 @@ Content-Type: application/json
 
 ## Delete a group ##
 DELETE https://graph.microsoft.com/v1.0/groups/{group-id}
+
+
+## Get all users created between January and March 2022 ##
+GET https://graph.microsoft.com/v1.0/users?$filter=createdDateTime ge 2022-01-01T00:00:00Z and createdDateTime le 2022-03-31T23:59:59Z
