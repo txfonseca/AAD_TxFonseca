@@ -1,0 +1,7 @@
+User Management:
+## Get any users on tenant that have "user@mail" as UPN, mail, othermails, or any mails ##
+GET https://graph.microsoft.com/v1.0/users?$filter=mail eq 'user@mail.com' or userPrincipalName eq 'user@mail.com' or proxyAddresses/any(c:c eq 'smtp:user@mail.com') or proxyAddresses/any(c:c eq 'SMTP:user@mail.com')
+
+
+Group Management:
+
