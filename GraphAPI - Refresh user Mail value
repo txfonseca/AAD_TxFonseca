@@ -1,0 +1,36 @@
+##DESCRIPTION:##
+#This script was developed in response to a scenario where a customer needed to add proxy addresses to guest users that didn't have them due to past conflicts with contacts in the tenant. The solution was derived from the Microsoft Graph API documentation at https://learn.microsoft.com/en-us/graph/api/resources/user?view=graph-rest-1.0#mail-and-proxyaddresses-properties, which states that updating the mail property of a user triggers a recalculation of proxyAddresses, setting the newly updated mail as the primary proxy address.
+
+#The script is designed to update the mail attributes of users using the Microsoft Graph PowerShell module. This action triggers a recalculation of the proxy addresses for the users being updated. Before running the script, a CSV file containing the objectIDs of the users is required. It's important to note that any contacts with matching SMTP addresses to those of the users being updated must be deleted first to avoid conflicts.
+
+#The script operates by importing user IDs from a CSV file, connecting to Microsoft Graph, and then looping through each user ID to retrieve the user details, store the user's mail attribute in a variable, and update the user's mail attribute with the same value that was there in the first place by using Microsoft Graph Powershell. It provides feedback on the console about the progress of the updates.
+
+##SCRIPT##
+# Import user IDs from a CSV file located at the specified path
+$userIds = Import-Csv -Path "path_to_your_csv.csv"
+
+# Connect to Microsoft Graph using the Connect-MgGraph command
+Connect-MgGraph
+
+# Initialize a counter for the remaining users to update
+$remainingUsers = $userIds.Count
+
+# Loop through each user ID from the CSV file
+foreach ($userId in $userIds) {
+    # Retrieve the user details from Microsoft Graph using their ObjectId
+    $user = Get-MgUser -UserId $userId.ObjectId
+    # Store the user's mail attribute in a variable
+    $mail = $user.Mail
+    # Update the user's mail attribute in Microsoft Graph
+    Update-MgUser -UserId $userId.ObjectId -Mail $mail
+
+    # Display a message showing the user that has been updated
+    Write-Host "Updated user: $($user.DisplayName) with ObjectId: $($userId.ObjectId) and Mail: $mail"
+    # Decrement the remaining users counter
+    $remainingUsers--
+    # Display a message showing how many users are still left to update
+    Write-Host "$remainingUsers users remaining to update. Mail value added: $mail"
+}
+
+# Display a message indicating all users have been updated
+Write-Host "All users have been updated with their respective mail values."
