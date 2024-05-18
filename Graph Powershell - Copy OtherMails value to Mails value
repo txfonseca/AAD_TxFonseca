@@ -1,0 +1,33 @@
+# Import user IDs from a CSV file located at the specified path
+$userIds = Import-Csv -Path "yourpath.csv"
+
+# Connect to Microsoft Graph using the Connect-MgGraph command
+Connect-MgGraph -scopes "user.readwrite.all"
+ 
+# Initialize a counter for the remaining users to update
+$remainingUsers = $userIds.Count
+ 
+# Loop through each user ID from the CSV file
+foreach ($userId in $userIds) {
+ 
+    # Retrieve the user details from Microsoft Graph using their ObjectId
+    $user = Get-MgUser -UserId $userId.ObjectId -Property "displayName,userPrincipalName,otherMails,createdDateTime,Mail" | Select displayName,otherMails,CreatedDateTime,Mail
+ 
+    # Store the user's mail attribute in a variable
+    $otherMail = $user.OtherMails[0]
+ 
+    # Update the user's mail attribute in Microsoft Graph
+    Update-MgUser -UserId $userId.ObjectId -Mail $otherMail
+ 
+    # Display a message showing the user that has been updated
+    Write-Host "Updated user: $($userId.DisplayName) with ObjectId: $($userId.ObjectId) and Mail: $otherMail"
+ 
+    # Decrement the remaining users counter
+    $remainingUsers--
+ 
+    # Display a message showing how many users are still left to update
+    Write-Host "$remainingUsers users remaining to update. Mail value added: $otherMail"
+}
+
+# Display a message indicating all users have been updated
+Write-Host "All users have been updated with their respective mail values."
