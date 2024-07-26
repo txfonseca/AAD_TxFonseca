@@ -1,0 +1,34 @@
+# Step 1: Import the CSV file
+# This step reads the CSV file containing tenant information into a variable.
+$tenants = Import-Csv -Path "<path-to-your-csv-file>"
+
+# Step 2: Define the API endpoint template
+# This template will be used to construct the API endpoint for each tenant.
+$apiEndpointTemplate = "https://graph.microsoft.com/beta/tenantRelationships/findTenantInformationByDomainName(domainName='{0}')"
+
+# Step 3: Define a function to make the API call
+# This function takes a tenant ID as a parameter, constructs the API endpoint, and makes the API call.
+function Invoke-GraphApi {
+    param (
+        [string]$tenantId
+    )
+
+    # Construct the API endpoint
+    $apiEndpoint = [string]::Format($apiEndpointTemplate, $tenantId)
+
+    # Make the API call
+    $response = Invoke-RestMethod -Uri $apiEndpoint -Method Get -Headers @{
+        "Authorization" = "Bearer $accessToken"
+    }
+
+    # Output the response
+    $response
+}
+
+# Step 4: Iterate over each tenant ID and make the API call
+# This loop goes through each tenant in the CSV file, calls the API, and outputs the response.
+foreach ($tenant in $tenants) {
+    $tenantId = $tenant.tenantid
+    $response = Invoke-GraphApi -tenantId $tenantId
+    Write-Output $response
+}
