@@ -1,0 +1,27 @@
+# Step 1: Define your tenant ID, client ID, and client secret
+# These values are used to authenticate your application with Azure AD.
+$tenantId = "<your-tenant-id>"
+$clientId = "<your-client-id>"
+$clientSecret = "<your-client-secret>"
+
+# Step 2: Define the token endpoint
+# This is the URL where you will send the authentication request to obtain an access token.
+$tokenEndpoint = "https://login.microsoftonline.com/$tenantId/oauth2/v2.0/token"
+
+# Step 3: Define the body for the token request
+# The body contains the necessary parameters for the token request, including the client ID, scope, client secret, and grant type.
+$body = @{
+    client_id     = $clientId
+    scope         = "https://graph.microsoft.com/.default"
+    client_secret = $clientSecret
+    grant_type    = "client_credentials"
+}
+
+# Step 4: Make the token request
+# Use the Invoke-RestMethod cmdlet to send a POST request to the token endpoint with the specified body.
+$response = Invoke-RestMethod -Method Post -Uri $tokenEndpoint -ContentType "application/x-www-form-urlencoded" -Body $body
+
+# Step 5: Extract the access token
+# The response from the token endpoint will include an access token, which you can extract and use for subsequent API requests.
+$accessToken = $response.access_token
+Write-Output "Access Token: $accessToken"
