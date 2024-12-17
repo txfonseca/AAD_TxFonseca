@@ -27,3 +27,11 @@ $response.value | Select-Object `
     @{Name="Role Assignment Id"; Expression={$_.id}}, `
     @{Name="Type"; Expression={$_.type}}, `
     @{Name="Name"; Expression={$_.name}} | Out-GridView -Title "Role Assignments"
+
+
+
+_______________________________________________________________________________
+##Alternative method, not using the Grid Outview
+
+connect-azaccount
+invoke-azrestmethod -uri "https://management.azure.com/subscriptions/SUBID/providers/Microsoft.Authorization/roleAssignments?api-version=2022-04-01" -method get
