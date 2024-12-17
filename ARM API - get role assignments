@@ -1,0 +1,29 @@
+# Connect to Azure
+Connect-AzAccount
+
+# Get the access token
+$token = (Get-AzAccessToken -ResourceUrl "https://management.azure.com/").Token
+
+# Define the API URL with the correct filter
+$apiUrl = "https://management.azure.com/subscriptions/SUBID/providers/Microsoft.Authorization/roleAssignments?`$filter=principalId eq 'PID'&api-version=2022-04-01"
+
+# Make the API request
+$response = Invoke-RestMethod -Headers @{Authorization = "Bearer $($token)"} -Uri $apiUrl -Method Get
+
+# Expand and select the properties to display in the table
+$response.value | Select-Object `
+    @{Name="Role Definition Id"; Expression={$_.properties.roleDefinitionId}}, `
+    @{Name="Principal Id"; Expression={$_.properties.principalId}}, `
+    @{Name="Principal Type"; Expression={$_.properties.principalType}}, `
+    @{Name="Scope"; Expression={$_.properties.scope}}, `
+    @{Name="Condition"; Expression={$_.properties.condition}}, `
+    @{Name="Condition Version"; Expression={$_.properties.conditionVersion}}, `
+    @{Name="Created On"; Expression={$_.properties.createdOn}}, `
+    @{Name="Updated On"; Expression={$_.properties.updatedOn}}, `
+    @{Name="Created By"; Expression={$_.properties.createdBy}}, `
+    @{Name="Updated By"; Expression={$_.properties.updatedBy}}, `
+    @{Name="Delegated Managed Identity Resource Id"; Expression={$_.properties.delegatedManagedIdentityResourceId}}, `
+    @{Name="Description"; Expression={$_.properties.description}}, `
+    @{Name="Role Assignment Id"; Expression={$_.id}}, `
+    @{Name="Type"; Expression={$_.type}}, `
+    @{Name="Name"; Expression={$_.name}} | Out-GridView -Title "Role Assignments"
